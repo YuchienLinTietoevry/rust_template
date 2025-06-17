@@ -1,0 +1,38 @@
+name: Create a pull-request when finish a hotfix
+
+on:
+    push:
+        branches:
+            - hotfix/**
+
+jobs:
+    create-pr:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Set up GitHub CLI
+              run: |
+                  gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
+
+            - name: Check for gitflow auto trigger commit
+              run: |
+                  COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+                  echo "Latest commit message: $COMMIT_MESSAGE
+                  if [[ "$COMMIT_MESSAGE" == "[gitflow auto] trigger a pull-request"* ]]; then
+                    echo "Triggering PR creation..."
+                    echo "TRIGGER_PR=true" >> $GITHUB_ENV
+                  else
+                    echo "No trigger commit found. Skipping PR creation."
+                  fi
+
+            - name: Create Pull Request
+              if: env.TRIGGER_PR == 'true'
+              run: |
+                  BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+                  gh pr create \
+                    --base develop \
+                    --head "$BRANCH_NAME" \
+                    --title "Hotfix: $BRANCH_NAME" \
+                    --body "Automatically created PR for branch $BRANCH_NAME"

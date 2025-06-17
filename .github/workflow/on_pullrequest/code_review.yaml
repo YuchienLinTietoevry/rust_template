@@ -1,0 +1,26 @@
+name: AI Code Review with Advanced Settings
+
+on:
+    pull_request:
+        types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+    ai_code_review:
+        runs-on: ubuntu-latest
+        steps:
+            - name: AI Code Review
+              uses: AleksandrFurmenkovOfficial/ai-code-review@v0.8
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  owner: ${{ github.repository_owner }}
+                  repo: ${{ github.event.repository.name }}
+                  pr_number: ${{ github.event.number }}
+
+                  ai_provider: "openai"
+                  openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+
+                  include_extensions: ".py,.js,.tsx"
+                  exclude_extensions: ".test.js"
+                  include_paths: "src/,app/"
+                  exclude_paths: "test/,docs/"
+                  fail_action_if_review_failed: "true"
